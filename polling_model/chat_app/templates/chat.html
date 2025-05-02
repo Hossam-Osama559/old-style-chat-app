@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+
+    <style>
+      .add_requests {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 400px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+      }
+    </style>
+    
+</head>
+<body>
+
+     <div id="add_requests" class="add_requests">
+   
+         <h1>they wanna to be your friends </h1>
+
+        
+          
+
+     </div>
+
+
+
+     <h1>Add new friend</h1>
+     <form method="post" id="add_friend">
+
+      {% csrf_token %}
+
+      {{add_friend.as_p}}
+
+      <button>Add</button>
+          
+     </form>
+     <p id="status"></p>
+
+      <h1>Send new message</h1>
+     <form  method="post" id="send">
+        {% csrf_token %} 
+        {{form.as_p}}
+     <button>Send</button>
+</form>
+
+<p id="status2"></p>
+
+<div class="messages">
+    <p>your Messages</p>
+
+
+    {% for x in msgs %}
+
+    <p>{{x.seneder}}:{{x.content}}</p>
+
+    {% endfor %}
+
+    <pre id="new_msgs"></pre>
+</div>
+  <a href="{% url 'chat' %}" id="dummy"></a>
+</body>
+
+<script>
+
+
+const form=document.getElementById("send")
+let status2=document.getElementById("status2")
+const add_friend=document.getElementById("add_friend")
+
+form.addEventListener("submit",function(e){
+    
+    e.preventDefault()
+
+    data=e.target
+
+    form_data=new FormData(data)
+
+    const url="{% url 'chat' %}"
+    fetch(url,{
+     
+        method:"POST",
+
+        headers:{
+        
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+
+        body:form_data
+
+    }).then(res=>res.text()).
+    then(boo=>{
+     console.log(boo)
+
+      status2.textContent=boo 
+    
+    })
+
+    function delete_status(){
+        status2.textContent=""
+      }
+
+      setTimeout(delete_status,3000)
+
+
+})
+
+
+
+
+let new_msgs=document.getElementById("new_msgs")
+let status=document.getElementById("status")
+
+function check_for_new_msg(){
+
+     fetch("{% url 'check' %}")
+
+     .then(res=>{
+
+
+          if (res.redirected){
+
+               window.location.href=res.url
+          }
+
+          else {
+            return res.text()
+          }
+     })
+     .then(msg=>{
+
+         if (msg.length){
+
+              new_msgs.textContent+=`\n${msg}`
+         }
+     })
+
+      
+}
+
+
+add_friend.addEventListener("submit",function(e){
+
+     e.preventDefault()
+
+     data=e.target
+
+     form_obj=new FormData(data)
+
+     console.log("sending the req")
+
+     fetch("{% url 'make_friend' %}",{
+       
+      method:"POST",
+
+      headers:{
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+
+      body:form_obj
+      
+
+     }).then(res=>res.text()).
+       then(dd=>{
+      console.log(dd)
+      
+
+      if (dd[0]==="1"){
+        status.textContent="the request is submited "
+          
+           fetch("{% url 'add_req' %}",{
+
+
+            method:"POST",
+
+            headers:{
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+              "Content-Type":"plain/text"
+            },
+
+            body:dd.slice(1)
+               
+           })
+      }
+      else{
+          status.textContent=dd
+      }
+     })  
+      function delete_status(){
+        status.textContent=""
+      }
+
+      setTimeout(delete_status,3000)
+
+
+
+})
+
+
+let class_noti=document.getElementById("add_requests")
+
+function do_i_have_notif(){
+
+     fetch("{% url 'add_req' %}")
+
+     .then(res=>{
+
+          if (res.redirected){
+
+              window.location.href=res.url
+          }
+          else {
+            return res.text()
+          }
+     })
+     .then(bo=>{
+
+         list_not=bo.split("\n")
+
+         list_not=list_not.slice(0,list_not.length-1)
+
+        //  console.log("here")
+        //  console.log(list_not)
+
+
+         for (let child of Array.from(class_noti.children)) {
+    // console.log(child.nodeName);
+
+       if (child.nodeName!="H1"){
+        child.remove();
+       }
+    
+}
+         
+         list_not.forEach(element => {
+
+                console.log(element[0],element[1],element[2])
+
+                let form=document.createElement("form")
+
+                let pp=document.createElement("p")
+
+                form.id=`${element[0]}`
+
+                let dummy=document.createElement("input")
+
+                dummy.type="hidden"
+
+                dummy.value=`${element[0]}`
+
+                dummy.name="dummy"
+                let cont=document.createElement("bre")
+                
+                if (element[1]=="0"){
+                  console.log("hell1")
+                  cont.textContent=`${element.slice(3)} wanna to be your friend`
+                }
+                
+                else {
+                  console.log("hell2")
+
+                      if (element[2]==="1"){
+                        pp.textContent=`${element.slice(3)} become your friend`
+                      }
+
+                      else {
+
+                        pp.textContent=`${element.slice(3)} don't need to be your friend`
+                      }
+
+                      class_noti.appendChild(pp) 
+                      
+                }
+
+                if (element[1]==="0"){
+                  console.log("hell3")
+
+                let add=document.createElement("button")
+                add.name="but"
+                add.value="1"
+                add.textContent="get it"
+
+                let det=document.createElement("button")
+                det.name="but"
+                det.value="0"
+                det.textContent="discard it"
+
+                form.addEventListener("submit",handle_noti_submition)
+
+
+
+                form.appendChild(cont)
+                form.appendChild(add)
+                form.appendChild(det)
+                form.appendChild(dummy)
+
+                class_noti.appendChild(form)
+                }
+               
+         });
+     })
+
+
+}
+
+
+function handle_noti_submition(e){
+
+    e.preventDefault()
+
+    submitter=e.submitter
+
+    data=e.target
+
+    form_data=new FormData(data)
+
+    form_data.append(submitter.name,submitter.value)
+
+    fetch("{% url 'handle_noti_submition' %}",{
+      method:"POST",
+
+      headers:{
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+
+      },
+
+      body:form_data
+    }).then(res=>res.text())
+
+    .then(bo=>{
+      console.log("here we are")
+    })
+
+     
+}
+
+setInterval(check_for_new_msg,500)
+
+
+setInterval(do_i_have_notif,1000)
+
+</script>
+
+
+
+</html>

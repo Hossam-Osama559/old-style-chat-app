@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+</head>
+<body>
+    <form id="reg">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button>Register</button>
+    </form>
+    <p id="error"></p>
+
+    <a href="{% url 'logging_in' %}" id="dummy"></a>
+</body>
+
+
+<script>
+
+ let reg=document.getElementById("reg")
+
+ reg.addEventListener("submit",function(e){
+
+
+      e.preventDefault()
+
+      data=e.target
+
+      form_data=new FormData(data)
+
+
+      fetch("{% url 'register' %}",{
+
+        method:"POST",
+        
+        headers:{
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body:form_data
+      }).then(res=>res.text()).
+
+      then (body=>{
+
+
+           if (body==="0"){
+              console.log("here we go")
+
+               document.getElementById("error").textContent="the username is exist already choace another one"
+           }
+
+           else if (body==="1"){
+            console.log("there we go")
+               document.getElementById("dummy").click()
+           }
+      })
+
+
+ })
+
+
+</script>
+
+</html>
