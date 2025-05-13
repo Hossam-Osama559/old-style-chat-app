@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+
+    <style>
+      .add_requests {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 400px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+      }
+    </style>
+    
+</head>
+<body>
+
+     <div id="add_requests" class="add_requests">
+   
+         <h1>they wanna to be your friends </h1>
+
+        
+          
+
+     </div>
+
+
+
+     <h1>Add new friend</h1>
+     <form id="add_friend">
+
+      {% csrf_token %}
+
+      {{add_friend.as_p}}
+
+      <button>Add</button>
+          
+     </form>
+     <p id="status"></p>
+
+      <h1>Send new message</h1>
+     <form  method="post" id="send">
+        {% csrf_token %} 
+        {{form.as_p}}
+     <button>Send</button>
+</form>
+
+<p id="status2"></p>
+
+<div class="messages">
+    <p>your Messages</p>
+
+
+    {% for x in msgs %}
+
+    <p>{{x.seneder}}:{{x.content}}</p>
+
+    {% endfor %}
+
+    <pre id="new_msgs"></pre>
+</div>
+  <a href="{% url 'chat' %}" id="dummy"></a>
+</body>
+
+<script>
+
+  // handling the notificition part when user add friend  
+
+ let add_friend_form=document.getElementById("add_friend")
+ let websocket_for_notifi=new WebSocket(`ws://${window.location.host}/new_friend`)
+ let status=document.getElementById("status")
+ let add_requests=document.getElementById("add_requests")
+
+
+
+ 
+
+ add_friend_form.addEventListener("submit",(event)=>{
+
+
+       event.preventDefault()
+
+       form_obj=new FormData(event.target)
+       const obj={}
+       form_obj.forEach((k,v) => {
+        
+
+            obj[v]=k
+       });
+
+       websocket_for_notifi.send(JSON.stringify(obj))
+ })
+
+
+ websocket_for_notifi.onmessage=function(data){
+
+      const obj=JSON.parse(data.data)
+
+      state=obj["is"]
+
+
+
+      function clr(){
+        status.textContent=""
+      }
+      
+
+
+      if (state==="0"){
+        console.log(state)
+          status.textContent="no such username ..."
+
+          
+      }
+
+
+      else if (state==="1"){
+
+        status.textContent="wtf he is your friend already ..."
+          
+      }
+
+      else if (state==="2"){
+
+          status.textContent="now you are friends..."
+      }
+
+      else if (state==="3"){
+
+        console.log(`${obj["from"]} wanna to be your friend`)
+
+
+        id=obj["id"]
+
+        username=obj["from"]
+
+
+        new_form=document.createElement("form")
+        
+        // new_form.addEventListener("submit",(e)=>{
+
+
+        //      e.preventDefault()
+
+             
+        // })
+
+        b=document.createElement("b")
+
+        b.textContent=`${username} wanna be your friend`
+
+        ok=document.createElement("button")
+
+        ok.textContent="OK"
+
+        no=document.createElement("button")
+
+        no.textContent="NO"
+
+        dummy=document.createElement("input")
+
+        dummy.setAttribute("type","hidden")
+
+        dummy.setAttribute("name","id")
+
+        dummy.setAttribute("value",id)
+
+        new_form.appendChild(b)
+        new_form.appendChild(ok)
+        new_form.appendChild(no)
+        new_form.appendChild(dummy)
+
+        add_requests.appendChild(new_form)
+
+        console.log("done")
+
+
+
+      }
+      setTimeout(clr,5000)
+
+ }
+
+
+</script>
+
+
+
+</html>

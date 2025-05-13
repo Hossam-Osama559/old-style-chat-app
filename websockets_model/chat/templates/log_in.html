@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <form id="log"  >
+        {% csrf_token %} 
+        {{form.as_p}}
+        <button>Login</button>
+    </form>
+
+    <p id="exist"></p>
+
+    <a href="{% url 'register' %}">don't have an account ? Register</a>
+    
+    
+    <a href="{% url 'chat' %}" id="dummy"></a>
+</body>
+
+<script>
+
+    const form=document.getElementById("log")
+
+   form.addEventListener("submit",function(e){
+       
+       e.preventDefault()
+
+       data=e.target
+
+       form_data=new FormData(data)
+
+       const url="{% url 'logging_in' %}"
+       fetch(url,{
+        
+           method:"POST",
+
+           headers:{
+           
+           'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+           },
+
+           body:form_data
+
+       }).then(res=>res.text()).
+       then(boo=>{
+        console.log(boo)
+
+        if (boo==="0"){
+
+            let exist=document.getElementById("exist")
+
+            exist.textContent="the user don't exist "
+
+            function reset_exist(){
+
+                exist.textContent=""
+            }
+            setTimeout(reset_exist,3000)
+        }
+
+        else if(boo==="1"){
+
+             document.getElementById("dummy").click()
+        }
+       })
+
+   })
+
+
+</script>
+
+
+</html>
