@@ -6,6 +6,8 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from .models import msg,friends,notifications
 
+import json
+
 def logging_in(req):
 
 
@@ -124,5 +126,43 @@ def chat(req):
                 # res.set_cookie("last_msg_index","0")
             
 
-            return res 
+            return res
+        
+def existed_notif(req):
 
+
+    
+
+    all_objs=[]
+
+
+    notif=notifications.objects.filter(to_user=req.user)
+
+
+    # print(notif[0].from_user)
+
+
+    for noti in notif:
+
+        obj={}
+
+        obj["type"]=f"{noti.noti_type}"
+        obj["from"]=noti.from_user.username
+
+        obj["id"]=noti.from_user.id 
+        
+
+        
+        if noti.res_type==0:
+
+            obj["msg"]=f"{noti.from_user} don't neet to be your friend"
+        elif noti.res_type==1:
+
+            obj["msg"]=f"{noti.from_user} become your friend .."
+        
+        all_objs.append(obj)
+
+
+    json_obj=json.dumps(all_objs)
+
+    return HttpResponse(json_obj)
