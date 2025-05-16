@@ -130,7 +130,7 @@ def chat(req):
         
 def existed_notif(req):
 
-
+    """load all the existed notificitions of the user when he load the app"""
     
 
     all_objs=[]

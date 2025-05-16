@@ -1,11 +1,10 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User 
 
 from asgiref.sync import sync_to_async
-# from .forms import m
-from .models import friends , notifications
+from .models import friends , notifications ,msg
 
 class handle_add_friend(AsyncWebsocketConsumer):
 
@@ -190,4 +189,145 @@ class handle_add_friend(AsyncWebsocketConsumer):
             })
         )
 
+
+
+
+
+class msg_handling_consumer(AsyncWebsocketConsumer):
+     
+
+
+    async def connect(self):
+          
+          
+        self.user=self.scope["user"]
+
+        await self.channel_layer.group_add(
+               f"{self.user.id}msg",
+               self.channel_name
+          )
+
+         
+        await self.accept()
     
+
+    async def disconnect(self):
+         
+         await self.channel_layer.group_discard(
+              
+              f"{self.user.id}msg",
+
+              self.channel_name
+         )
+    
+
+
+    async def  receive(self,text_data):
+         
+         
+
+        loaded_data=json.loads(text_data)
+
+        msg_conntent=loaded_data["content"]
+
+        reciever_user=await sync_to_async(list)(User.objects.filter(username=loaded_data["reciever_name"])) 
+
+        print(reciever_user[0])
+        
+
+        if len(reciever_user):
+
+            are_you_friends=await sync_to_async(friends.objects.filter(user=self.user,friend=reciever_user[0]).exists)()  or await sync_to_async(friends.objects.filter(user=reciever_user[0],friend=self.user).exists)() 
+
+            if (are_you_friends):
+                
+                """the friendship exist"""
+
+
+                await sync_to_async(msg.objects.create)(content=msg_conntent,reciever=reciever_user[0],seneder=self.user,reciever_name=reciever_user[0].username)
+
+
+                await self.channel_layer.group_send(
+                    f"{reciever_user[0].id}msg",
+
+                    {
+                            
+                            "type":"handle_new_msg",
+
+                            "from":self.user.username,
+
+                            "content":msg_conntent
+                    }
+                )
+
+
+                await self.send(
+                    
+                    text_data=json.dumps(
+                            
+                            {
+                                "state":"1",
+                            }
+                    )
+                )
+            
+
+            else :
+             
+             """you are not firiends"""
+
+             await self.send(
+                  
+                  text_data=json.dumps(
+                       
+                       {
+                            "state":"0",
+                            
+                       }
+                  )
+             )
+
+    
+
+            
+        else :
+             
+             """you are not firiends"""
+
+             await self.send(
+                  
+                  text_data=json.dumps(
+                       
+                       {
+                            "state":"0",
+                            
+                       }
+                  )
+             )
+
+    
+
+
+    async def handle_new_msg(self,event):
+         
+
+         await self.send(
+              
+              text_data=json.dumps(
+                   
+                   {
+                        
+                        "state":"2",
+
+                        "msg":f"{event['from']}:{event['content']}"
+                   }
+              )
+         )
+        
+
+
+
+
+         
+
+     

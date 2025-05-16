@@ -43,7 +43,7 @@
      <p id="status"></p>
 
       <h1>Send new message</h1>
-     <form  method="post" id="send">
+     <form   id="send">
         {% csrf_token %} 
         {{form.as_p}}
      <button>Send</button>
@@ -51,7 +51,7 @@
 
 <p id="status2"></p>
 
-<div class="messages">
+<div id="messages">
     <p>your Messages</p>
 
 
@@ -62,7 +62,7 @@
     {% endfor %}
 
     <pre id="new_msgs"></pre>
-</div>
+</div >
   <a href="{% url 'chat' %}" id="dummy"></a>
 </body>
 
@@ -71,9 +71,11 @@
   // handling the notificition part when user add friend  
 
  let add_friend_form=document.getElementById("add_friend")
- let websocket_for_notifi=new WebSocket(`ws://${window.location.host}/new_friend`)
- let status=document.getElementById("status")
- let add_requests=document.getElementById("add_requests")
+
+ let websocket_for_notifi=new WebSocket(`ws://${window.location.host}/new_friend`) // this webscoket handles the adding friend and the response to the add req 
+
+ let status=document.getElementById("status") //dummy p element to put in it the response to adding friend
+ let add_requests=document.getElementById("add_requests")  //here the div that contains the adding requests that comes to the user 
 
 
 
@@ -271,6 +273,84 @@
  reqeuest_the_notifications_when_the_page_loaded()
 
 
+
+
+
+let status2=document.getElementById("status2")
+
+let handle_msgs_websocket=new WebSocket(`ws://${window.location.host}/msgs`)  //  new websocket for handline the messaging 
+
+
+
+// yet another new msg
+let send_form=document.getElementById("send") 
+let messages=document.getElementById("messages")
+
+let new_msgs=document.getElementById("new_msgs")
+
+send_form.addEventListener("submit",(event)=>{
+
+
+     event.preventDefault()
+
+     new_form=new FormData(event.target)
+
+     obj={}
+
+     new_form.forEach((k,v)=>{
+
+         obj[v]=k
+     })
+
+     handle_msgs_websocket.send(JSON.stringify(obj))
+})
+
+
+
+// responeses from the server
+
+
+ handle_msgs_websocket.onmessage=function(data){
+
+
+   obj=JSON.parse(data.data)
+
+
+   state=obj["state"]
+
+   console.log(state)
+
+
+   if (state==="0"){
+
+      status2.textContent="he is not your friend add him first"
+      
+   }
+
+
+   else if (state==="1"){
+
+      status2.textContent="done , messge arrived "
+   }
+
+
+   else if (state==="2"){
+    console.log(obj["msg"])
+
+
+    new_msgs.textContent+=`${obj["msg"]}`
+
+   }
+
+
+   function clr_status2(){
+
+       status2.textContent=""
+   }
+
+   setTimeout(clr_status2,3000)
+
+ }
 
 
 </script>
